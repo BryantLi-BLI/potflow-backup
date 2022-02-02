@@ -2,7 +2,7 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-PACKAGE_NANE = "ProjectName"
+PACKAGE_NANE = "potflow"
 
 
 def get_version():
