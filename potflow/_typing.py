@@ -1,3 +1,1 @@
-from typing import Tuple
-
-Vector = Tuple[float, float, float]
+Vector = tuple[float, float, float]
