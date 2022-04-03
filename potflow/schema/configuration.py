@@ -24,7 +24,7 @@ class Configuration(BaseModel):
     )
 
     coords: Union[np.ndaray, torch.Tensor, List[Vector]] = Field(
-        title="coords",
+        title="Coords",
         description="Coordinates of the atoms. Shape (N, 3), where N is the number of "
         "atoms in the configuration.",
     )
@@ -47,7 +47,7 @@ class Configuration(BaseModel):
     property: Property = Field(
         None,
         title="Property",
-        description="Property associated with the configuration.",
+        description="Properties associated with the configuration.",
     )
 
     uuid: str = Field(

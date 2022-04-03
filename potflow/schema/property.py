@@ -12,7 +12,7 @@ class Property(BaseModel):
 
     energy: Union[float, np.ndarray, torch.Tensor] = Field(
         None,
-        title="Total Energy",
+        title="Energy",
         description="Total energy of a configuration. Shape: (,)",
     )
 
