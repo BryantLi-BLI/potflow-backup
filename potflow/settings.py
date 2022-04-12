@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import BaseSettings, Field, root_validator
 
-_DEFAULT_CONFIG_FILE_PATH = Path("~/.potflow.yaml").expanduser()
+_DEFAULT_CONFIG_FILE_PATH = Path("~/.potflow.yaml").expanduser().as_posix()
 
 
 class PotflowSettings(BaseSettings):
@@ -21,6 +21,7 @@ class PotflowSettings(BaseSettings):
     In addition, the variables can be modified directly through environment variables by
     using the "POTFLOW" prefix. E..g., POTFLOW_SCRATCH_DIR = /path/to/scratch.
     """
+
     # TODO, check how the environment variables work
 
     CONFIG_FILE: str = Field(

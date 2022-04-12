@@ -3,6 +3,6 @@ from potflow.settings import PotflowSettings
 
 from ._version import __version__
 
-SETTINGS = PotflowSettings
+SETTINGS = PotflowSettings()
 
 set_logger()

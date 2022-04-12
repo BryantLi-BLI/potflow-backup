@@ -9,8 +9,9 @@ Interatomic potential workflows (PotFlow).
  ```
  git clone https://github.com/mjwen/potflow.git
  cd potflow 
- conda env create -f environment.yml
+ conda create --name potflow 
  conda activate potflow 
+ conda env update -f environment.yml
  pip install -e . 
  ```
 
