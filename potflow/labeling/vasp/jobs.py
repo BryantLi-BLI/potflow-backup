@@ -4,7 +4,9 @@ import abc
 from dataclasses import dataclass, field
 
 import numpy as np
-from jobflow import Maker, job
+from atomate2.vasp.jobs.base import BaseVaspMaker
+from atomate2.vasp.jobs.core import RelaxMaker as Atomate2RelaxMaker
+from jobflow import Flow, Maker, Response, job
 from loguru import logger
 from pymatgen.alchemy.materials import TransformedStructure
 from pymatgen.analysis.elasticity import Strain
@@ -17,29 +19,63 @@ from pymatgen.transformations.standard_transformations import (
 
 from potflow import SETTINGS
 from potflow._typing import Matrix6D
+from potflow.labeling.vasp.jobs import StructureComposeMaker
 
 
 @dataclass
 class StructureComposeMaker(Maker):
     """
-    A base Maker to compose (transform) structures.
+    A base Maker to compose (generate) structures.
+
+    Args:
+        relax: Whether to relax the generated structure.
+        realx_maker: Atomate2 maker to relax the structure if `relax=True`.
+        name: name of the job.
     """
 
-    name: str = "structure compose job"
+    relax: bool = True
+    relax_maker: BaseVaspMaker = field(default_factory=Atomate2RelaxMaker)
+    name: str = "structure compose"
 
-    @abc.abstractmethod
     @job
-    def make(
-        self, structure: Structure | tuple[Structure, ...]
-    ) -> Structure | list[Structure]:
+    def make(self, structure: Structure | tuple[Structure, ...]) -> list[Structure]:
         """
-        Perform transformations to structure to form new structures.
+        Perform transformations on input structure to generate new structures.
+
+        The actual transformation should be done in the `compose_structure()` method.
+        This make function is a wrapper to make turn it into a job.
 
         Args:
             structure: Input pymatgen structure.
 
         Returns:
             Composed new structures.
+        """
+        generated_structure = self.compose_structure(structure)
+
+        if isinstance(generated_structure, Structure):
+            generated_structure = [generated_structure]
+
+        if self.relax:
+            static_jobs = [self.relax_maker.make(s) for s in generated_structure]
+            outputs = [j.output.structure for j in static_jobs]
+            flow = Flow(jobs=static_jobs, output=outputs)
+            return Response(replace=flow)
+        else:
+            return generated_structure
+
+    @abc.abstractmethod
+    def compose_structure(
+        self, structure: Structure | tuple[Structure, ...]
+    ) -> Structure | list[Structure]:
+        """
+        Generate children structures from the input given parent structures.
+
+        Args:
+            structure: Input pymatgen structure.
+
+        Returns:
+            Generated new structure(s).
         """
 
 
@@ -87,8 +123,7 @@ class StrainedStructureMaker(StructureComposeMaker):
     sym_reduce: bool = True
     symprec: float = SETTINGS.SYMPREC
 
-    @job
-    def make(self, structure: Structure) -> list[Structure]:
+    def compose_structure(self, structure: Structure) -> list[Structure]:
         """
         Generate the new structures.
 

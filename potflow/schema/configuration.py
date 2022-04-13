@@ -7,6 +7,7 @@ from typing import List, Sequence, Tuple, Union
 import numpy as np
 import torch
 from pydantic import BaseModel, Field
+from pymatgen.core.structure import Structure
 
 from potflow._typing import Vector
 from potflow.schema.property import Property
@@ -59,7 +60,7 @@ class Configuration(BaseModel):
         pass
 
     @classmethod
-    def from_pymatgen_structure(cls):
+    def from_pymatgen_structure(cls, structure: Structure):
         pass
 
     @classmethod
