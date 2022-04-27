@@ -81,6 +81,8 @@ class StructureComposeMaker(Maker):
         Returns:
             Generated new structure(s).
         """
+
+
 @dataclass
 class CoherentStructureMaker(StructureComposeMaker):
     """
@@ -104,16 +106,19 @@ class CoherentStructureMaker(StructureComposeMaker):
     slab2_miller_indices_upper_limit: int = 2
     miller_indices_matches: list[tuple] = None
 
-    def miller_matches(self, struc1,struc2) -> list[miller_indices_matches]:
-        sa = SubstrateAnalyzer(self.slab1_miller_indices_upper_limit, self.slab2_miller_indices_upper_limit)
+    def miller_matches(self, struc1, struc2) -> list[miller_indices_matches]:
+        sa = SubstrateAnalyzer(
+            self.slab1_miller_indices_upper_limit, self.slab2_miller_indices_upper_limit
+        )
         matches = list(sa.calculate(substrate=struc1, film=struc2))
         new_match = []
         for match in matches:
             new_match.append((match.film_miller, match.substrate_miller))
         return set(new_match)
 
-
-    def compose_structure(self, structure: tuple[Structure,Structure]) -> list[Structure]:
+    def compose_structure(
+        self, structure: tuple[Structure, Structure]
+    ) -> list[Structure]:
         """
         Generate the newy structures.
 
@@ -127,35 +132,41 @@ class CoherentStructureMaker(StructureComposeMaker):
         structure1 = structure[0]
         structure2 = structure[1]
 
-        struc1,struc2 = get_conventional_strucs(structure1, structure2)
+        struc1, struc2 = get_conventional_strucs(structure1, structure2)
 
-        miller_matches = self.miller_matches(struc1,struc2)
+        miller_matches = self.miller_matches(struc1, struc2)
         all_interfaces = []
         for millerindex in miller_matches:
-            cib = CoherentInterfaceBuilder(substrate_structure=struc1,
-                               film_structure=struc2,
-                               film_miller=millerindex[0],
-                               substrate_miller=millerindex[1])
+            cib = CoherentInterfaceBuilder(
+                substrate_structure=struc1,
+                film_structure=struc2,
+                film_miller=millerindex[0],
+                substrate_miller=millerindex[1],
+            )
             for termination in cib.terminations:
-                interfaces = list(cib.get_interfaces(termination, gap = self.interface_gap, vacuum_over_film= self.interface_gap)) #TODO sometimes creates duplicates
+                interfaces = list(
+                    cib.get_interfaces(
+                        termination,
+                        gap=self.interface_gap,
+                        vacuum_over_film=self.interface_gap,
+                    )
+                )  # TODO sometimes creates duplicates
                 all_interfaces.extend(interfaces)
 
         return all_interfaces
 
 
-
-
 def get_conventional_strucs(struc1, struc2):
-    #struc1, struc2 are structures directly obtained from MP via MPRester (eg. li_struct = mpr.get_structure_by_material_id('mp-135'))
+    # struc1, struc2 are structures directly obtained from MP via MPRester (eg. li_struct = mpr.get_structure_by_material_id('mp-135'))
 
-    struc1_conventional = SpacegroupAnalyzer(struc1).get_conventional_standard_structure()
-    struc2_conventional = SpacegroupAnalyzer(struc2).get_conventional_standard_structure()
+    struc1_conventional = SpacegroupAnalyzer(
+        struc1
+    ).get_conventional_standard_structure()
+    struc2_conventional = SpacegroupAnalyzer(
+        struc2
+    ).get_conventional_standard_structure()
 
     return struc1_conventional, struc2_conventional
-
-
-
-
 
 
 # TODO, can it be generalized to use pymatgen AbstractTransformation to abstract this?
