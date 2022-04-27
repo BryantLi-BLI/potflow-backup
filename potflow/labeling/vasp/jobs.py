@@ -16,6 +16,10 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.transformations.standard_transformations import (
     DeformStructureTransformation,
 )
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.analysis.interfaces.substrate_analyzer import SubstrateAnalyzer
+from pymatgen.analysis.interfaces.coherent_interfaces import CoherentInterfaceBuilder
+
 
 from potflow import SETTINGS
 from potflow._typing import Matrix6D
@@ -77,6 +81,81 @@ class StructureComposeMaker(Maker):
         Returns:
             Generated new structure(s).
         """
+@dataclass
+class CoherentStructureMaker(StructureComposeMaker):
+    """
+    Maker to generate multiple strained structures.
+
+    Args:
+        interface_gap: Distance between two slabs when interfaced (default: 2 angstroms)
+        slab1_thickness: Thickness of structure 1 slab; scaled by how many unit cells. Note this value corresponds to a multiplier.
+            e.g slab1_thickness: 2 implies two unit cell of slab1 is used in the interfaced structure. (default: 1)
+        slab2_thickness: Same properties as slab1, except for second slab structure
+        slab1_miller_indices_upper_limit: highest miller indices value
+            e.g slab1_miller_indices_upper_limit:3 yields only miller indices matches below (333) (default: 2)
+        slab2_miller_indices_upper_limit: Same properties as slab1, except for second slab structure
+    """
+
+    name: str = "coherent interface structure job"
+    interface_gap: float = 2
+    slab1_thickness: float = 1
+    slab2_thickness: float = 1
+    slab1_miller_indices_upper_limit: int = 2
+    slab2_miller_indices_upper_limit: int = 2
+    miller_indices_matches: list[tuple] = None
+
+    def miller_matches(self, struc1,struc2) -> list[miller_indices_matches]:
+        sa = SubstrateAnalyzer(self.slab1_miller_indices_upper_limit, self.slab2_miller_indices_upper_limit)
+        matches = list(sa.calculate(substrate=struc1, film=struc2))
+        new_match = []
+        for match in matches:
+            new_match.append((match.film_miller, match.substrate_miller))
+        return set(new_match)
+
+
+    def compose_structure(self, structure: tuple[Structure,Structure]) -> list[Structure]:
+        """
+        Generate the newy structures.
+
+        Args:
+            structure: parent structure.
+
+        Returns:
+            Strained structures generated from the parent structure.
+        """
+
+        structure1 = structure[0]
+        structure2 = structure[1]
+
+        struc1,struc2 = get_conventional_strucs(structure1, structure2)
+
+        miller_matches = self.miller_matches(struc1,struc2)
+        all_interfaces = []
+        for millerindex in miller_matches:
+            cib = CoherentInterfaceBuilder(substrate_structure=struc1,
+                               film_structure=struc2,
+                               film_miller=millerindex[0],
+                               substrate_miller=millerindex[1])
+            for termination in cib.terminations:
+                interfaces = list(cib.get_interfaces(termination, gap = self.interface_gap, vacuum_over_film= self.interface_gap)) #TODO sometimes creates duplicates
+                all_interfaces.extend(interfaces)
+
+        return all_interfaces
+
+
+
+
+def get_conventional_strucs(struc1, struc2):
+    #struc1, struc2 are structures directly obtained from MP via MPRester (eg. li_struct = mpr.get_structure_by_material_id('mp-135'))
+
+    struc1_conventional = SpacegroupAnalyzer(struc1).get_conventional_standard_structure()
+    struc2_conventional = SpacegroupAnalyzer(struc2).get_conventional_standard_structure()
+
+    return struc1_conventional, struc2_conventional
+
+
+
+
 
 
 # TODO, can it be generalized to use pymatgen AbstractTransformation to abstract this?
