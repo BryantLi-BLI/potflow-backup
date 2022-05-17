@@ -90,11 +90,13 @@ class CoherentStructureMaker(StructureComposeMaker):
 
     Args:
         interface_gap: Distance between two slabs when interfaced (default: 2 angstroms)
-        slab1_thickness: Thickness of structure 1 slab; scaled by how many unit cells. Note this value corresponds to a multiplier.
-            e.g slab1_thickness: 2 implies two unit cell of slab1 is used in the interfaced structure. (default: 1)
+        slab1_thickness: Thickness of structure 1 slab; scaled by how many unit cells. Note
+            this value corresponds to a multiplier.e.g slab1_thickness: 2 implies two unit
+            cell of slab1 is used in the interfaced structure. (default: 1)
         slab2_thickness: Same properties as slab1, except for second slab structure
         slab1_miller_indices_upper_limit: highest miller indices value
-            e.g slab1_miller_indices_upper_limit:3 yields only miller indices matches below (333) (default: 2)
+            e.g slab1_miller_indices_upper_limit:3 yields only miller indices matches
+            below (333) (default: 2)
         slab2_miller_indices_upper_limit: Same properties as slab1, except for second slab structure
     """
 
@@ -120,10 +122,10 @@ class CoherentStructureMaker(StructureComposeMaker):
         self, structure: tuple[Structure, Structure]
     ) -> list[Structure]:
         """
-        Generate the newy structures.
+        Generates list of all interfaced structures from Structure1 and Structure2.
 
         Args:
-            structure: parent structure.
+            structure: tuple of parent structures
 
         Returns:
             Strained structures generated from the parent structure.
@@ -157,7 +159,13 @@ class CoherentStructureMaker(StructureComposeMaker):
 
 
 def get_conventional_strucs(struc1, struc2):
-    # struc1, struc2 are structures directly obtained from MP via MPRester (eg. li_struct = mpr.get_structure_by_material_id('mp-135'))
+    """
+        Obtain Convectional Structures for Pymatgen Manipulation
+
+        Args:
+            strucX: Directly obtained from Materials Project via MPRester
+                (eg. struct_BCC_Li = mpr.get_structure_by_material_id('mp-135')).
+        """
 
     struc1_conventional = SpacegroupAnalyzer(
         struc1
